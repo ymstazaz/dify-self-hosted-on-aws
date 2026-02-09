@@ -6,7 +6,7 @@ import { UsEast1Stack } from '../lib/us-east-1-stack';
 import { EnvironmentProps } from '../lib/environment-props';
 
 export const props: EnvironmentProps = {
-  awsRegion: 'us-west-2',
+  awsRegion: 'ap-northeast-1',
   awsAccount: process.env.CDK_DEFAULT_ACCOUNT!,
   // Set Dify version
   difyImageTag: '1.11.4',
@@ -15,8 +15,8 @@ export const props: EnvironmentProps = {
 
   // uncomment the below options for less expensive configuration:
   // isRedisMultiAz: false,
-  // useNatInstance: true,
-  // enableAuroraScalesToZero: true,
+  useNatInstance: true,
+  enableAuroraScalesToZero: true,
   // useFargateSpot: true,
 
   // Please see EnvironmentProps in lib/environment-props.ts for all the available properties
