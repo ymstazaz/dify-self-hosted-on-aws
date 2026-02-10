@@ -148,7 +148,7 @@ To deploy on a closed network, please follow the steps below:
     ```ts
     export const props: EnvironmentProps = {
         // set region and account explicitly.
-        awsRegion: 'ap-northeast-1',
+        awsRegion: 'ap-northeast-3',
         awsAccount: '123456789012',
 
         // Set your internal IP address ranges here.
