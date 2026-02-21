@@ -1,6 +1,6 @@
 import { CpuArchitecture, FargateTaskDefinition, ICluster } from 'aws-cdk-lib/aws-ecs';
 import { Construct } from 'constructs';
-import { Duration, aws_ecs as ecs } from 'aws-cdk-lib';
+import { Duration, aws_ecs as ecs, aws_applicationautoscaling as appscaling } from 'aws-cdk-lib';
 import { IAlb } from '../alb';
 import { IRepository } from 'aws-cdk-lib/aws-ecr';
 import { EnvironmentProps } from '../../environment-props';
@@ -95,6 +95,33 @@ export class WebService extends Construct {
       ],
       enableExecuteCommand: true,
       minHealthyPercent: 100,
+    });
+
+    const scalableTarget = service.autoScaleTaskCount({
+      minCapacity: 0,
+      maxCapacity: 1,
+    });
+
+    // 起動スケジュール (土日の10:00 JST = 01:00 UTC)
+    scalableTarget.scaleOnSchedule('StartSaturdaySunday', {
+      schedule: appscaling.Schedule.cron({
+        minute: '0',
+        hour: '1',
+        weekDay: 'SAT,SUN',
+      }),
+      minCapacity: 1,
+      maxCapacity: 1,
+    });
+
+    // 停止スケジュール (土日の21:00 JST = 12:00 UTC)
+    scalableTarget.scaleOnSchedule('StopSaturdaySunday', {
+      schedule: appscaling.Schedule.cron({
+        minute: '0',
+        hour: '12',
+        weekDay: 'SAT,SUN',
+      }),
+      minCapacity: 0,
+      maxCapacity: 0,
     });
 
     alb.addEcsService('Web', service, port, '/', ['/*']);

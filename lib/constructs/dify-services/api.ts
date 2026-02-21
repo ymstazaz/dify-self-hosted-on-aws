@@ -1,6 +1,6 @@
 import { CpuArchitecture, FargateTaskDefinition, ICluster } from 'aws-cdk-lib/aws-ecs';
 import { Construct } from 'constructs';
-import { CfnOutput, Duration, Stack, aws_ecs as ecs } from 'aws-cdk-lib';
+import { CfnOutput, Duration, Stack, aws_ecs as ecs, aws_applicationautoscaling as appscaling } from 'aws-cdk-lib';
 import { Platform } from 'aws-cdk-lib/aws-ecr-assets';
 import { AccessKey, ManagedPolicy, PolicyStatement, User } from 'aws-cdk-lib/aws-iam';
 import { Postgres } from '../postgres';
@@ -435,6 +435,33 @@ export class ApiService extends Construct {
       enableExecuteCommand: true,
       minHealthyPercent: 100,
       // desiredCount: 3, // set this for scaling out (default: 1)
+    });
+
+    const scalableTarget = service.autoScaleTaskCount({
+      minCapacity: 0,
+      maxCapacity: 1,
+    });
+
+    // 起動スケジュール (土日の10:00 JST = 01:00 UTC)
+    scalableTarget.scaleOnSchedule('StartSaturdaySunday', {
+      schedule: appscaling.Schedule.cron({
+        minute: '0',
+        hour: '1',
+        weekDay: 'SAT,SUN',
+      }),
+      minCapacity: 1,
+      maxCapacity: 1,
+    });
+
+    // 停止スケジュール (土日の21:00 JST = 12:00 UTC)
+    scalableTarget.scaleOnSchedule('StopSaturdaySunday', {
+      schedule: appscaling.Schedule.cron({
+        minute: '0',
+        hour: '12',
+        weekDay: 'SAT,SUN',
+      }),
+      minCapacity: 0,
+      maxCapacity: 0,
     });
 
     postgres.connections.allowDefaultPortFrom(service);
